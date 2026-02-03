@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -227,7 +228,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.person_outline_rounded,
                     title: 'Edit Profile',
                     subtitle: 'Update your personal information',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuDivider(),
                   _buildMenuItem(

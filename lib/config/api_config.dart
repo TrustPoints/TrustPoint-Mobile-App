@@ -14,6 +14,7 @@ class ApiConfig {
   static const String login = '/api/login';
   static const String profile = '/api/profile';
   static const String profileEdit = '/api/profile/edit';
+  static const String changePassword = '/api/profile/change-password';
   static const String health = '/health';
 
   // Timeouts

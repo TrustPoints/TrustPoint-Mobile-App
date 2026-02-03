@@ -150,6 +150,37 @@ class AuthService {
     );
   }
 
+  /// Change user password
+  Future<ChangePasswordResult> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final token = await getToken();
+    if (token == null) {
+      return ChangePasswordResult(success: false, message: 'Not authenticated');
+    }
+
+    final response = await _apiService.post(
+      ApiConfig.changePassword,
+      body: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+        'confirm_password': confirmPassword,
+      },
+      token: token,
+    );
+
+    return ChangePasswordResult(
+      success: response.success,
+      message:
+          response.message ??
+          (response.success
+              ? 'Password berhasil diubah'
+              : 'Gagal mengubah password'),
+    );
+  }
+
   /// Logout - clear stored credentials
   Future<void> logout() async {
     await _secureStorage.delete(key: _tokenKey);
@@ -201,4 +232,12 @@ class UserResult {
   final User? user;
 
   UserResult({required this.success, this.message, this.user});
+}
+
+/// Result class for change password operations
+class ChangePasswordResult {
+  final bool success;
+  final String message;
+
+  ChangePasswordResult({required this.success, required this.message});
 }
