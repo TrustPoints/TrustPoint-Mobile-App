@@ -49,5 +49,11 @@
 	<string>TrustPoint membutuhkan akses kamera untuk mengambil foto profil</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>TrustPoint membutuhkan akses galeri untuk memilih foto profil</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>TrustPoint membutuhkan akses lokasi untuk menentukan titik pickup dan tujuan pengiriman</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>TrustPoint membutuhkan akses lokasi untuk tracking pengiriman</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>TrustPoint membutuhkan akses lokasi untuk tracking pengiriman</string>
 </dict>
 </plist>

@@ -113,6 +113,7 @@ class AuthService {
     String? fullName,
     String? profilePicture,
     String? languagePreference,
+    Map<String, dynamic>? defaultAddress,
   }) async {
     final token = await getToken();
     if (token == null) {
@@ -124,6 +125,7 @@ class AuthService {
     if (profilePicture != null) body['profile_picture'] = profilePicture;
     if (languagePreference != null)
       body['language_preference'] = languagePreference;
+    if (defaultAddress != null) body['default_address'] = defaultAddress;
 
     final response = await _apiService.put(
       ApiConfig.profileEdit,
@@ -135,6 +137,37 @@ class AuthService {
       // Handle nested response: { data: { user }, message, success }
       final data = response.data!['data'] as Map<String, dynamic>?;
       final userData = data?['user'] as Map<String, dynamic>?;
+      if (userData != null) {
+        return UserResult(
+          success: true,
+          message: response.message ?? 'Profile updated',
+          user: User.fromJson(userData),
+        );
+      }
+    }
+
+    return UserResult(
+      success: false,
+      message: response.message ?? 'Failed to update profile',
+    );
+  }
+
+  /// Update user profile with raw data (for setting null values)
+  Future<UserResult> updateProfileRaw(Map<String, dynamic> data) async {
+    final token = await getToken();
+    if (token == null) {
+      return UserResult(success: false, message: 'Not authenticated');
+    }
+
+    final response = await _apiService.put(
+      ApiConfig.profileEdit,
+      body: data,
+      token: token,
+    );
+
+    if (response.success && response.data != null) {
+      final responseData = response.data!['data'] as Map<String, dynamic>?;
+      final userData = responseData?['user'] as Map<String, dynamic>?;
       if (userData != null) {
         return UserResult(
           success: true,

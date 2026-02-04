@@ -1,5 +1,42 @@
 import 'dart:io';
 
+/// Default Address Model
+class DefaultAddress {
+  final String address;
+  final double latitude;
+  final double longitude;
+
+  DefaultAddress({
+    required this.address,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory DefaultAddress.fromJson(Map<String, dynamic> json) {
+    return DefaultAddress(
+      address: json['address'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'address': address, 'latitude': latitude, 'longitude': longitude};
+  }
+
+  DefaultAddress copyWith({
+    String? address,
+    double? latitude,
+    double? longitude,
+  }) {
+    return DefaultAddress(
+      address: address ?? this.address,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+    );
+  }
+}
+
 /// User Model for TrustPoints
 class User {
   final String id;
@@ -8,6 +45,7 @@ class User {
   final String? profilePicture;
   final double trustScore;
   final String languagePreference;
+  final DefaultAddress? defaultAddress;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -18,6 +56,7 @@ class User {
     this.profilePicture,
     required this.trustScore,
     required this.languagePreference,
+    this.defaultAddress,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -50,6 +89,11 @@ class User {
       profilePicture: json['profile_picture'] as String?,
       trustScore: (json['trust_score'] as num?)?.toDouble() ?? 0.0,
       languagePreference: json['language_preference'] as String? ?? 'en',
+      defaultAddress: json['default_address'] != null
+          ? DefaultAddress.fromJson(
+              json['default_address'] as Map<String, dynamic>,
+            )
+          : null,
       createdAt: _parseDate(json['created_at'] as String?),
       updatedAt: _parseDate(json['updated_at'] as String?),
     );
@@ -64,6 +108,7 @@ class User {
       'profile_picture': profilePicture,
       'trust_score': trustScore,
       'language_preference': languagePreference,
+      'default_address': defaultAddress?.toJson(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -77,6 +122,7 @@ class User {
     String? profilePicture,
     double? trustScore,
     String? languagePreference,
+    DefaultAddress? defaultAddress,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -87,6 +133,7 @@ class User {
       profilePicture: profilePicture ?? this.profilePicture,
       trustScore: trustScore ?? this.trustScore,
       languagePreference: languagePreference ?? this.languagePreference,
+      defaultAddress: defaultAddress ?? this.defaultAddress,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

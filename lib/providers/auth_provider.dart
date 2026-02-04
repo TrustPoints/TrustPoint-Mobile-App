@@ -13,6 +13,7 @@ class AuthProvider with ChangeNotifier {
   User? _user;
   String? _errorMessage;
   bool _isLoading = false;
+  String? _cachedToken;
 
   // Getters
   AuthState get state => _state;
@@ -21,12 +22,24 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _state == AuthState.authenticated;
 
+  /// Get cached token (synchronous) - use after ensuring token is loaded
+  String? get token => _cachedToken;
+
+  /// Get current token (async) - fetches from secure storage
+  Future<String?> getToken() async {
+    _cachedToken = await _authService.getToken();
+    return _cachedToken;
+  }
+
   /// Initialize - check if user is already logged in
   Future<void> initialize() async {
     _setLoading(true);
 
     final isLoggedIn = await _authService.isLoggedIn();
     if (isLoggedIn) {
+      // Cache the token
+      _cachedToken = await _authService.getToken();
+
       // Try to fetch user profile
       final result = await _authService.getProfile();
       if (result.success && result.user != null) {
@@ -35,6 +48,7 @@ class AuthProvider with ChangeNotifier {
       } else {
         // Token might be expired, logout
         await _authService.logout();
+        _cachedToken = null;
         _state = AuthState.unauthenticated;
       }
     } else {
@@ -65,6 +79,9 @@ class AuthProvider with ChangeNotifier {
       // Set authenticated state first
       _state = AuthState.authenticated;
 
+      // Cache the token
+      _cachedToken = await _authService.getToken();
+
       // Try to fetch user profile after registration
       final profileResult = await _authService.getProfile();
       if (profileResult.success && profileResult.user != null) {
@@ -92,6 +109,9 @@ class AuthProvider with ChangeNotifier {
     if (result.success) {
       // Set authenticated state first
       _state = AuthState.authenticated;
+
+      // Cache the token
+      _cachedToken = await _authService.getToken();
 
       // Try to fetch user profile after login
       final profileResult = await _authService.getProfile();
@@ -151,6 +171,7 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     await _authService.logout();
     _user = null;
+    _cachedToken = null;
     _state = AuthState.unauthenticated;
     _setLoading(false);
     notifyListeners();

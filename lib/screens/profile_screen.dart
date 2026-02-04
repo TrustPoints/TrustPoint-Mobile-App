@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'edit_profile_screen.dart';
+import 'default_address_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -265,9 +266,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _buildMenuDivider(),
                   _buildMenuItem(
                     icon: Icons.location_on_outlined,
-                    title: 'Saved Addresses',
-                    subtitle: 'Manage your delivery addresses',
-                    onTap: () {},
+                    title: 'Alamat Default',
+                    subtitle: user?.defaultAddress != null
+                        ? user!.defaultAddress!.address
+                        : 'Atur alamat pickup default',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DefaultAddressScreen(),
+                        ),
+                      );
+                    },
+                    trailing: user?.defaultAddress != null
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              size: 16,
+                              color: AppColors.success,
+                            ),
+                          )
+                        : null,
                   ),
                   _buildMenuDivider(),
                   _buildMenuItem(

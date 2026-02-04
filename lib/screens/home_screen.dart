@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'profile_screen.dart';
+import 'orders/create_order_screen.dart';
+import 'orders/available_orders_screen.dart';
+import 'orders/my_orders_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -239,7 +242,14 @@ class _HomeScreenState extends State<HomeScreen>
                     icon: Icons.add_box_rounded,
                     label: 'Send Package',
                     gradient: AppTheme.primaryGradient,
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreateOrderScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -250,7 +260,14 @@ class _HomeScreenState extends State<HomeScreen>
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00AA13), Color(0xFF4CD964)],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AvailableOrdersScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -260,23 +277,37 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Expanded(
                   child: _buildQuickAction(
-                    icon: Icons.qr_code_scanner_rounded,
-                    label: 'Scan QR',
+                    icon: Icons.local_shipping_rounded,
+                    label: 'My Deliveries',
                     gradient: const LinearGradient(
                       colors: [Color(0xFF1C1C1C), Color(0xFF6B6B6B)],
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyDeliveriesScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: _buildQuickAction(
                     icon: Icons.history_rounded,
-                    label: 'History',
+                    label: 'My Orders',
                     gradient: const LinearGradient(
                       colors: [Color(0xFF9E9E9E), Color(0xFFBDBDBD)],
                     ),
-                    onTap: () => setState(() => _selectedIndex = 1),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyOrdersScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
