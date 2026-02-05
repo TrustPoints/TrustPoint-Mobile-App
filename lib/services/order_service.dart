@@ -11,7 +11,7 @@ class OrderService {
     required CreateOrderRequest request,
   }) async {
     final response = await _apiService.post(
-      '/orders',
+      '/api/orders',
       body: request.toJson(),
       token: token,
     );
@@ -44,7 +44,7 @@ class OrderService {
     int skip = 0,
   }) async {
     final response = await _apiService.get(
-      '/orders/available?limit=$limit&skip=$skip',
+      '/api/orders/available?limit=$limit&skip=$skip',
       token: token,
     );
 
@@ -87,7 +87,7 @@ class OrderService {
     int limit = 50,
   }) async {
     final response = await _apiService.get(
-      '/orders/nearby?lat=$latitude&lng=$longitude&radius=$radius&limit=$limit',
+      '/api/orders/nearby?lat=$latitude&lng=$longitude&radius=$radius&limit=$limit',
       token: token,
     );
 
@@ -126,7 +126,10 @@ class OrderService {
     required String token,
     required String orderId,
   }) async {
-    final response = await _apiService.get('/orders/$orderId', token: token);
+    final response = await _apiService.get(
+      '/api/orders/$orderId',
+      token: token,
+    );
 
     if (response.success && response.data != null) {
       final orderData =
@@ -153,7 +156,7 @@ class OrderService {
     required String orderId,
   }) async {
     final response = await _apiService.put(
-      '/orders/claim/$orderId',
+      '/api/orders/claim/$orderId',
       token: token,
     );
 
@@ -184,7 +187,7 @@ class OrderService {
     required String orderId,
   }) async {
     final response = await _apiService.put(
-      '/orders/pickup/$orderId',
+      '/api/orders/pickup/$orderId',
       token: token,
     );
 
@@ -213,7 +216,7 @@ class OrderService {
     required String orderId,
   }) async {
     final response = await _apiService.put(
-      '/orders/deliver/$orderId',
+      '/api/orders/deliver/$orderId',
       token: token,
     );
 
@@ -243,7 +246,7 @@ class OrderService {
     required String orderId,
   }) async {
     final response = await _apiService.put(
-      '/orders/cancel/$orderId',
+      '/api/orders/cancel/$orderId',
       token: token,
     );
 
@@ -273,7 +276,7 @@ class OrderService {
     int limit = 50,
     int skip = 0,
   }) async {
-    String endpoint = '/orders/my-orders?limit=$limit&skip=$skip';
+    String endpoint = '/api/orders/my-orders?limit=$limit&skip=$skip';
     if (status != null) {
       endpoint += '&status=$status';
     }
@@ -311,7 +314,7 @@ class OrderService {
     int limit = 50,
     int skip = 0,
   }) async {
-    String endpoint = '/orders/my-deliveries?limit=$limit&skip=$skip';
+    String endpoint = '/api/orders/my-deliveries?limit=$limit&skip=$skip';
     if (status != null) {
       endpoint += '&status=$status';
     }
@@ -344,7 +347,7 @@ class OrderService {
 
   /// Get categories
   Future<List<CategoryItem>> getCategories() async {
-    final response = await _apiService.get('/orders/categories');
+    final response = await _apiService.get('/api/orders/categories');
 
     if (response.success && response.data != null) {
       final data = response.data!['data'] as Map<String, dynamic>?;

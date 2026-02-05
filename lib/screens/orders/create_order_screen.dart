@@ -798,17 +798,76 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     );
   }
 
+  /// Validate only item step fields
+  bool _validateItemStep() {
+    // Validate item name
+    final itemName = _itemNameController.text.trim();
+    if (itemName.isEmpty) {
+      _showValidationError('Nama barang wajib diisi');
+      return false;
+    }
+    if (itemName.length < 3) {
+      _showValidationError('Nama barang minimal 3 karakter');
+      return false;
+    }
+
+    // Validate weight
+    final weightText = _itemWeightController.text.trim();
+    if (weightText.isEmpty) {
+      _showValidationError('Berat wajib diisi');
+      return false;
+    }
+    final weight = double.tryParse(weightText);
+    if (weight == null || weight <= 0) {
+      _showValidationError('Masukkan berat yang valid');
+      return false;
+    }
+    if (weight > 50) {
+      _showValidationError('Berat maksimal 50 kg');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Validate only location step fields
+  bool _validateLocationStep() {
+    // Validate pickup address
+    if (_pickupAddressController.text.trim().isEmpty) {
+      _showValidationError('Alamat pickup wajib diisi');
+      return false;
+    }
+
+    // Validate destination address
+    if (_destinationAddressController.text.trim().isEmpty) {
+      _showValidationError('Alamat tujuan wajib diisi');
+      return false;
+    }
+
+    return true;
+  }
+
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _onStepContinue() {
     if (_currentStep == 0) {
-      // Validate item step
-      if (_formKey.currentState?.validate() ?? false) {
+      // Validate item step only
+      if (_validateItemStep()) {
         setState(() {
           _currentStep++;
         });
       }
     } else if (_currentStep == 1) {
-      // Validate location step
-      if (_formKey.currentState?.validate() ?? false) {
+      // Validate location step only
+      if (_validateLocationStep()) {
         setState(() {
           _currentStep++;
         });
@@ -854,7 +913,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
   }
 
   Future<void> _createOrder() async {
-    if (!(_formKey.currentState?.validate() ?? false)) {
+    // Final validation before creating order
+    if (!_validateItemStep() || !_validateLocationStep()) {
       return;
     }
 
