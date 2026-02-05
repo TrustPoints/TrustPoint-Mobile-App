@@ -40,6 +40,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   // Default to Jakarta
   late LatLng _selectedLocation;
   bool _isGettingLocation = false;
+  bool _isMapReady = false;
   String? _errorMessage;
 
   @override
@@ -49,6 +50,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       widget.initialLatitude ?? -6.2088,
       widget.initialLongitude ?? 106.8456,
     );
+
+    // Auto get current location if no initial location provided
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.initialLatitude == null && widget.initialLongitude == null) {
+        _getCurrentLocation();
+      }
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -65,6 +73,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           _errorMessage = 'Layanan lokasi tidak aktif. Aktifkan GPS Anda.';
           _isGettingLocation = false;
         });
+        _showEnableLocationDialog();
         return;
       }
 
@@ -74,7 +83,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           setState(() {
-            _errorMessage = 'Izin lokasi ditolak';
+            _errorMessage =
+                'Izin lokasi ditolak. Tap tombol lokasi untuk mencoba lagi.';
             _isGettingLocation = false;
           });
           return;
@@ -91,13 +101,22 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         return;
       }
 
-      // Get current position
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      // Get current position with timeout
+      final position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: AndroidSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 0,
+              forceLocationManager: false,
+              intervalDuration: const Duration(seconds: 1),
+              timeLimit: const Duration(seconds: 20),
+            ),
+          ).timeout(
+            const Duration(seconds: 25),
+            onTimeout: () {
+              throw Exception('Timeout mendapatkan lokasi');
+            },
+          );
 
       final newLocation = LatLng(position.latitude, position.longitude);
 
@@ -107,13 +126,41 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       });
 
       // Move map to current location
-      _mapController.move(newLocation, 16.0);
-    } catch (e) {
+      if (_isMapReady) {
+        _mapController.move(newLocation, 16.0);
+      }
+    } on Exception catch (e) {
       setState(() {
         _errorMessage = 'Gagal mendapatkan lokasi: ${e.toString()}';
         _isGettingLocation = false;
       });
     }
+  }
+
+  void _showEnableLocationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('GPS Tidak Aktif'),
+        content: const Text(
+          'Untuk mendapatkan lokasi Anda, silakan aktifkan GPS/Layanan Lokasi di pengaturan perangkat.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Geolocator.openLocationSettings();
+            },
+            child: const Text('Buka Pengaturan'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showOpenSettingsDialog() {
@@ -187,6 +234,11 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
               minZoom: 3.0,
               maxZoom: 18.0,
               onTap: _onMapTap,
+              onMapReady: () {
+                setState(() {
+                  _isMapReady = true;
+                });
+              },
             ),
             children: [
               // OpenStreetMap Tile Layer (Free)

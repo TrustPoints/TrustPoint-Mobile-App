@@ -487,7 +487,8 @@ class _TrackingMap extends StatelessWidget {
 
     // Calculate center point between pickup and destination
     final centerLat = (pickupLatLng.latitude + destinationLatLng.latitude) / 2;
-    final centerLng = (pickupLatLng.longitude + destinationLatLng.longitude) / 2;
+    final centerLng =
+        (pickupLatLng.longitude + destinationLatLng.longitude) / 2;
     final centerLatLng = LatLng(centerLat, centerLng);
 
     // Calculate appropriate zoom level based on distance
@@ -613,15 +614,9 @@ class _TrackingMap extends StatelessWidget {
         // Legend
         Row(
           children: [
-            _MapLegendItem(
-              color: AppColors.primaryStart,
-              label: 'Pickup',
-            ),
+            _MapLegendItem(color: AppColors.primaryStart, label: 'Pickup'),
             const SizedBox(width: 16),
-            _MapLegendItem(
-              color: AppColors.error,
-              label: 'Tujuan',
-            ),
+            _MapLegendItem(color: AppColors.error, label: 'Tujuan'),
             const Spacer(),
             Text(
               '${order.distanceKm.toStringAsFixed(1)} km',
@@ -683,10 +678,7 @@ class _MapLegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _MapLegendItem({
-    required this.color,
-    required this.label,
-  });
+  const _MapLegendItem({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -696,23 +688,18 @@ class _MapLegendItem extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
       ],
     );
   }
 }
+
 class _LocationTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
