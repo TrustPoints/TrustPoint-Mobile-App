@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../config/app_theme.dart';
 import '../../models/order_model.dart';
@@ -92,6 +94,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     child: _LocationInfo(order: order),
                   ),
                   const SizedBox(height: 16),
+
+                  // Tracking Map (show when order is in progress)
+                  if (order.status == OrderStatus.claimed ||
+                      order.status == OrderStatus.inTransit) ...[
+                    _SectionCard(
+                      title: 'Tracking Pengiriman',
+                      child: _TrackingMap(order: order),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Notes (if any)
                   if (order.notes != null && order.notes!.isNotEmpty) ...[
@@ -456,6 +468,251 @@ class _LocationInfo extends StatelessWidget {
   }
 }
 
+/// Tracking Map Widget - Shows delivery route on map
+class _TrackingMap extends StatelessWidget {
+  final Order order;
+
+  const _TrackingMap({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    final pickupLatLng = LatLng(
+      order.pickupCoordinates.latitude,
+      order.pickupCoordinates.longitude,
+    );
+    final destinationLatLng = LatLng(
+      order.destinationCoordinates.latitude,
+      order.destinationCoordinates.longitude,
+    );
+
+    // Calculate center point between pickup and destination
+    final centerLat = (pickupLatLng.latitude + destinationLatLng.latitude) / 2;
+    final centerLng = (pickupLatLng.longitude + destinationLatLng.longitude) / 2;
+    final centerLatLng = LatLng(centerLat, centerLng);
+
+    // Calculate appropriate zoom level based on distance
+    final distance = order.distanceKm;
+    double zoom = 14.0;
+    if (distance > 20) {
+      zoom = 10.0;
+    } else if (distance > 10) {
+      zoom = 11.0;
+    } else if (distance > 5) {
+      zoom = 12.0;
+    } else if (distance > 2) {
+      zoom = 13.0;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Status indicator
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: order.status == OrderStatus.inTransit
+                ? AppColors.primaryStart.withOpacity(0.1)
+                : AppColors.info.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                order.status == OrderStatus.inTransit
+                    ? Icons.local_shipping
+                    : Icons.person_pin_circle,
+                color: order.status == OrderStatus.inTransit
+                    ? AppColors.primaryStart
+                    : AppColors.info,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                order.status == OrderStatus.inTransit
+                    ? 'Hunter sedang dalam perjalanan'
+                    : 'Hunter akan mengambil barang',
+                style: TextStyle(
+                  color: order.status == OrderStatus.inTransit
+                      ? AppColors.primaryStart
+                      : AppColors.info,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Map
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: 250,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: centerLatLng,
+                initialZoom: zoom,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                ),
+              ),
+              children: [
+                // OpenStreetMap tile layer
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.trustpoints.app',
+                  maxZoom: 19,
+                ),
+
+                // Route line between pickup and destination
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: [pickupLatLng, destinationLatLng],
+                      color: AppColors.primaryStart,
+                      strokeWidth: 4.0,
+                    ),
+                  ],
+                ),
+
+                // Markers
+                MarkerLayer(
+                  markers: [
+                    // Pickup marker
+                    Marker(
+                      point: pickupLatLng,
+                      width: 40,
+                      height: 40,
+                      child: _MapMarker(
+                        icon: Icons.circle,
+                        color: AppColors.primaryStart,
+                        label: 'A',
+                      ),
+                    ),
+                    // Destination marker
+                    Marker(
+                      point: destinationLatLng,
+                      width: 40,
+                      height: 40,
+                      child: _MapMarker(
+                        icon: Icons.location_on,
+                        color: AppColors.error,
+                        label: 'B',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Legend
+        Row(
+          children: [
+            _MapLegendItem(
+              color: AppColors.primaryStart,
+              label: 'Pickup',
+            ),
+            const SizedBox(width: 16),
+            _MapLegendItem(
+              color: AppColors.error,
+              label: 'Tujuan',
+            ),
+            const Spacer(),
+            Text(
+              '${order.distanceKm.toStringAsFixed(1)} km',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Custom map marker widget
+class _MapMarker extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _MapMarker({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Map legend item
+class _MapLegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _MapLegendItem({
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+}
 class _LocationTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
