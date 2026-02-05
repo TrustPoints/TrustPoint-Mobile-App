@@ -6,6 +6,7 @@ import '../../config/app_theme.dart';
 import '../../models/order_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
+import 'order_chat_screen.dart';
 import 'widgets/order_widgets.dart';
 
 /// Order Detail Screen
@@ -101,6 +102,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     _SectionCard(
                       title: 'Tracking Pengiriman',
                       child: _TrackingMap(order: order),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Chat Section (show when order has hunter)
+                  if (order.hunterId != null &&
+                      order.status != OrderStatus.cancelled) ...[
+                    _ChatSection(
+                      orderId: order.id,
+                      orderDisplayId: order.orderId,
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -464,6 +475,100 @@ class _LocationInfo extends StatelessWidget {
           coordinates: order.destinationCoordinates,
         ),
       ],
+    );
+  }
+}
+
+/// Chat Section Widget - Quick access to chat
+class _ChatSection extends StatelessWidget {
+  final String orderId;
+  final String orderDisplayId;
+
+  const _ChatSection({required this.orderId, required this.orderDisplayId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryStart.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.chat_bubble_outline,
+                  color: AppColors.primaryStart,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chat Pesanan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Komunikasi dengan sender/hunter',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OrderChatScreen(
+                      orderId: orderId,
+                      orderDisplayId: orderDisplayId,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.message),
+              label: const Text('Buka Chat'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
