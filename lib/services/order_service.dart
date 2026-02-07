@@ -45,6 +45,41 @@ class OrderService {
     );
   }
 
+  /// Estimate delivery cost before creating order
+  Future<EstimateCostResult> estimateDeliveryCost({
+    required String token,
+    required double distanceKm,
+    double weightKg = 0,
+    bool isFragile = false,
+  }) async {
+    final response = await _apiService.post(
+      '/api/orders/estimate-cost',
+      body: {
+        'distance_km': distanceKm,
+        'weight_kg': weightKg,
+        'is_fragile': isFragile,
+      },
+      token: token,
+    );
+
+    if (response.success && response.data != null) {
+      final data = response.data!['data'] as Map<String, dynamic>?;
+      if (data != null) {
+        return EstimateCostResult.success(
+          estimatedCost: data['estimated_cost'] as int? ?? 0,
+          hunterReward: data['hunter_reward'] as int? ?? 0,
+          currentBalance: data['current_balance'] as int? ?? 0,
+          canAfford: data['can_afford'] as bool? ?? false,
+          shortage: data['shortage'] as int? ?? 0,
+        );
+      }
+    }
+
+    return EstimateCostResult.error(
+      message: response.data?['message'] as String? ?? 'Gagal menghitung estimasi',
+    );
+  }
+
   /// Get available orders (Hunter - for map/list)
   Future<OrderListResult> getAvailableOrders({
     required String token,
@@ -460,5 +495,46 @@ class DeliveryResult {
 
   factory DeliveryResult.error({required String message}) {
     return DeliveryResult._(success: false, message: message);
+  }
+}
+/// Result class for delivery cost estimation
+class EstimateCostResult {
+  final bool success;
+  final int estimatedCost;
+  final int hunterReward;
+  final int currentBalance;
+  final bool canAfford;
+  final int shortage;
+  final String? message;
+
+  EstimateCostResult._({
+    required this.success,
+    this.estimatedCost = 0,
+    this.hunterReward = 0,
+    this.currentBalance = 0,
+    this.canAfford = false,
+    this.shortage = 0,
+    this.message,
+  });
+
+  factory EstimateCostResult.success({
+    required int estimatedCost,
+    required int hunterReward,
+    required int currentBalance,
+    required bool canAfford,
+    int shortage = 0,
+  }) {
+    return EstimateCostResult._(
+      success: true,
+      estimatedCost: estimatedCost,
+      hunterReward: hunterReward,
+      currentBalance: currentBalance,
+      canAfford: canAfford,
+      shortage: shortage,
+    );
+  }
+
+  factory EstimateCostResult.error({required String message}) {
+    return EstimateCostResult._(success: false, message: message);
   }
 }

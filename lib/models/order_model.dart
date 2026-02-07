@@ -240,7 +240,8 @@ class Order {
   final Coordinates pickupCoordinates;
   final Coordinates destinationCoordinates;
   final double distanceKm;
-  final int trustPointsReward;
+  final int pointsCost; // Cost for sender
+  final int trustPointsReward; // Reward for hunter
   final String status;
   final String? notes;
   final DateTime createdAt;
@@ -260,6 +261,7 @@ class Order {
     required this.pickupCoordinates,
     required this.destinationCoordinates,
     required this.distanceKm,
+    required this.pointsCost,
     required this.trustPointsReward,
     required this.status,
     this.notes,
@@ -345,6 +347,7 @@ class Order {
           ? Coordinates.fromJson(destCoordsJson)
           : destination.coords,
       distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0.0,
+      pointsCost: (json['points_cost'] as num?)?.toInt() ?? 0,
       trustPointsReward: (json['trust_points_reward'] as num?)?.toInt() ?? 0,
       status: json['status'] as String? ?? OrderStatus.pending,
       notes: json['notes'] as String?,

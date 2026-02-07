@@ -6,6 +6,7 @@ import '../../config/app_theme.dart';
 import '../../models/order_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../services/order_service.dart';
 import '../location_picker_screen.dart';
 import 'widgets/order_widgets.dart';
 
@@ -957,6 +958,51 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     try {
       final authProvider = context.read<AuthProvider>();
       final orderProvider = context.read<OrderProvider>();
+      final orderService = OrderService();
+
+      // First, estimate the delivery cost
+      final weight = double.tryParse(_itemWeightController.text.trim()) ?? 0;
+      final estimateResult = await orderService.estimateDeliveryCost(
+        token: authProvider.token!,
+        distanceKm: _distanceKm,
+        weightKg: weight,
+        isFragile: _isFragile,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (!estimateResult.success) {
+        _showValidationError(estimateResult.message ?? 'Gagal menghitung biaya');
+        return;
+      }
+
+      // Check if user can afford
+      if (!estimateResult.canAfford) {
+        _showInsufficientPointsDialog(
+          estimateResult.estimatedCost,
+          estimateResult.currentBalance,
+          estimateResult.shortage,
+        );
+        return;
+      }
+
+      // Show confirmation dialog with payment details
+      final confirmed = await _showPaymentConfirmationDialog(
+        estimatedCost: estimateResult.estimatedCost,
+        currentBalance: estimateResult.currentBalance,
+        hunterReward: estimateResult.hunterReward,
+      );
+
+      if (confirmed != true) {
+        return;
+      }
+
+      // Proceed with order creation
+      setState(() {
+        _isLoading = true;
+      });
 
       debugPrint('Creating order with distance: $_distanceKm km');
 
@@ -1006,6 +1052,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       });
 
       if (result.success && mounted) {
+        // Refresh user profile to update points balance
+        await authProvider.refreshProfile();
         _showSuccessDialog(result.order!);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1030,6 +1078,131 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     }
   }
 
+  /// Show insufficient points dialog
+  void _showInsufficientPointsDialog(int required, int current, int shortage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 28),
+            const SizedBox(width: 8),
+            const Text('Saldo Tidak Cukup'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildPointsRow('Biaya Pengiriman', '$required pts', AppColors.error),
+            const SizedBox(height: 8),
+            _buildPointsRow('Saldo Anda', '$current pts', AppColors.textSecondary),
+            const Divider(height: 24),
+            _buildPointsRow('Kekurangan', '$shortage pts', AppColors.error),
+            const SizedBox(height: 16),
+            const Text(
+              'Silakan top-up points Anda terlebih dahulu untuk melanjutkan.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to wallet/top-up screen
+            },
+            child: const Text('Top Up Points'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Show payment confirmation dialog
+  Future<bool?> _showPaymentConfirmationDialog({
+    required int estimatedCost,
+    required int currentBalance,
+    required int hunterReward,
+  }) {
+    final newBalance = currentBalance - estimatedCost;
+    
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Konfirmasi Pembayaran'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryStart.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  _buildPointsRow('Biaya Pengiriman', '$estimatedCost pts', AppColors.textPrimary),
+                  const SizedBox(height: 8),
+                  _buildPointsRow('Saldo Anda', '$currentBalance pts', AppColors.textSecondary),
+                  const Divider(height: 16),
+                  _buildPointsRow('Saldo Setelah', '$newBalance pts', AppColors.success),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Hunter akan mendapat $hunterReward pts saat pengiriman selesai.',
+                    style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Bayar $estimatedCost pts'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPointsRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showSuccessDialog(Order order) {
     showDialog(
       context: context,
@@ -1050,6 +1223,30 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               'Order ID: ${order.orderId}',
               style: const TextStyle(color: AppColors.textSecondary),
             ),
+            if (order.pointsCost > 0) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.toll, color: AppColors.warning, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '-${order.pointsCost} pts',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             const Text(
               'Hunter terdekat akan segera mengambil pesanan Anda.',
