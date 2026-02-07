@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/api_config.dart';
 import '../../config/app_theme.dart';
 import '../../models/chat_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/chat_service.dart';
+import '../../services/socket_service.dart';
 
-/// Order Chat Screen - Chat between sender and hunter
+/// Order Chat Screen - Realtime chat between sender and hunter using WebSocket
 class OrderChatScreen extends StatefulWidget {
   final String orderId;
   final String orderDisplayId;
@@ -23,6 +25,7 @@ class OrderChatScreen extends StatefulWidget {
 
 class _OrderChatScreenState extends State<OrderChatScreen> {
   final ChatService _chatService = ChatService();
+  final SocketService _socketService = SocketService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -30,25 +33,146 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isConnected = false;
+  bool _otherUserTyping = false;
   String? _error;
-  Timer? _refreshTimer;
+
+  // Stream subscriptions
+  StreamSubscription<bool>? _connectionSub;
+  StreamSubscription<ChatMessage>? _messageSub;
+  StreamSubscription<TypingEvent>? _typingSub;
+  StreamSubscription<ReadEvent>? _readSub;
+  StreamSubscription<String>? _errorSub;
+
+  // Typing debounce
+  Timer? _typingTimer;
+  bool _isTyping = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
-    // Auto-refresh messages every 5 seconds
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      _loadMessages(showLoading: false);
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    // Load existing messages first
+    await _loadMessages();
+
+    // Then connect to WebSocket
+    await _connectWebSocket();
+  }
+
+  Future<void> _connectWebSocket() async {
+    try {
+      // Setup listeners FIRST before connecting
+      _setupSocketListeners();
+
+      // Connect to socket
+      await _socketService.connect(baseUrl: ApiConfig.baseUrl);
+
+      // Join chat room after connection is established
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      debugPrint(
+        'OrderChatScreen: Socket connected: ${_socketService.isConnected}',
+      );
+
+      if (_socketService.isConnected) {
+        _socketService.joinChat(widget.orderId);
+        if (mounted) {
+          setState(() {
+            _isConnected = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('WebSocket connection error: $e');
+    }
+  }
+
+  void _setupSocketListeners() {
+    // Connection status
+    _connectionSub = _socketService.connectionStream.listen((connected) {
+      if (mounted) {
+        setState(() {
+          _isConnected = connected;
+        });
+
+        if (connected) {
+          // Rejoin chat room on reconnect
+          _socketService.joinChat(widget.orderId);
+        }
+      }
+    });
+
+    // New messages
+    _messageSub = _socketService.messageStream.listen((message) {
+      if (mounted) {
+        // Check if this message is not a duplicate
+        final isDuplicate = _messages.any((m) => m.id == message.id);
+        if (!isDuplicate) {
+          setState(() {
+            _messages.add(message);
+          });
+          _scrollToBottom();
+
+          // Mark as read if we're the receiver
+          final authProvider = context.read<AuthProvider>();
+          if (message.senderId != authProvider.user?.id) {
+            _socketService.markAsRead(widget.orderId);
+          }
+        }
+      }
+    });
+
+    // Typing indicator
+    _typingSub = _socketService.typingStream.listen((event) {
+      if (mounted && event.orderId == widget.orderId) {
+        final authProvider = context.read<AuthProvider>();
+        if (event.userId != authProvider.user?.id) {
+          setState(() {
+            _otherUserTyping = event.isTyping;
+          });
+        }
+      }
+    });
+
+    // Read receipts
+    _readSub = _socketService.readStream.listen((event) {
+      if (mounted && event.orderId == widget.orderId) {
+        // Reload to get updated read status
+        _loadMessages(showLoading: false);
+      }
+    });
+
+    // Errors
+    _errorSub = _socketService.errorStream.listen((error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: AppColors.error),
+        );
+      }
     });
   }
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    // Cancel all subscriptions
+    _connectionSub?.cancel();
+    _messageSub?.cancel();
+    _typingSub?.cancel();
+    _readSub?.cancel();
+    _errorSub?.cancel();
+    _typingTimer?.cancel();
+
+    // Leave chat room
+    _socketService.leaveChat(widget.orderId);
+
+    // Dispose controllers
     _messageController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
+
     super.dispose();
   }
 
@@ -72,14 +196,10 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
       setState(() {
         _isLoading = false;
         if (result.success) {
-          // Only update if there are new messages
-          if (_messages.length != result.messages.length) {
-            _messages = result.messages;
-            // Scroll to bottom after new messages
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _scrollToBottom();
-            });
-          }
+          _messages = result.messages;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollToBottom();
+          });
         } else {
           _error = result.message;
         }
@@ -98,31 +218,62 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
       _isSending = true;
     });
 
-    final result = await _chatService.sendMessage(
-      token: authProvider.token!,
-      orderId: widget.orderId,
-      message: message,
-    );
+    // Stop typing indicator
+    _socketService.sendTyping(widget.orderId, false);
+    _isTyping = false;
 
-    if (mounted) {
+    if (_isConnected) {
+      // Send via WebSocket (realtime)
+      _socketService.sendMessage(widget.orderId, message);
+      _messageController.clear();
       setState(() {
         _isSending = false;
-        if (result.success && result.chatMessage != null) {
-          _messageController.clear();
-          _messages.add(result.chatMessage!);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToBottom();
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? 'Gagal mengirim pesan'),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
       });
+    } else {
+      // Fallback to REST API if WebSocket not connected
+      final result = await _chatService.sendMessage(
+        token: authProvider.token!,
+        orderId: widget.orderId,
+        message: message,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          if (result.success && result.chatMessage != null) {
+            _messageController.clear();
+            _messages.add(result.chatMessage!);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _scrollToBottom();
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result.message ?? 'Gagal mengirim pesan'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        });
+      }
     }
+  }
+
+  void _onTextChanged(String text) {
+    // Send typing indicator
+    if (text.isNotEmpty && !_isTyping) {
+      _isTyping = true;
+      _socketService.sendTyping(widget.orderId, true);
+    }
+
+    // Reset typing timer
+    _typingTimer?.cancel();
+    _typingTimer = Timer(const Duration(seconds: 2), () {
+      if (_isTyping) {
+        _isTyping = false;
+        _socketService.sendTyping(widget.orderId, false);
+      }
+    });
   }
 
   void _scrollToBottom() {
@@ -146,7 +297,21 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Chat Pesanan', style: TextStyle(fontSize: 16)),
+            Row(
+              children: [
+                const Text('Chat Pesanan', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                // Connection indicator
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isConnected ? Colors.green : Colors.orange,
+                  ),
+                ),
+              ],
+            ),
             Text(
               widget.orderDisplayId,
               style: const TextStyle(
@@ -166,13 +331,88 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
       ),
       body: Column(
         children: [
+          // Connection status banner
+          if (!_isConnected)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              color: Colors.orange.shade100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(
+                        Colors.orange.shade700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Menghubungkan ke server...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.orange.shade900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Messages list
           Expanded(child: _buildMessagesList(currentUserId)),
+
+          // Typing indicator
+          if (_otherUserTyping)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  _buildTypingIndicator(),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Sedang mengetik...',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // Message input
           _buildMessageInput(),
         ],
       ),
+    );
+  }
+
+  Widget _buildTypingIndicator() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (index) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: Duration(milliseconds: 600 + (index * 200)),
+          builder: (context, value, child) {
+            return Container(
+              margin: const EdgeInsets.only(right: 4),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primaryStart.withOpacity(0.3 + (value * 0.7)),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 
@@ -408,6 +648,7 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
               textCapitalization: TextCapitalization.sentences,
               maxLines: 4,
               minLines: 1,
+              onChanged: _onTextChanged,
               decoration: InputDecoration(
                 hintText: 'Ketik pesan...',
                 hintStyle: const TextStyle(color: AppColors.textTertiary),

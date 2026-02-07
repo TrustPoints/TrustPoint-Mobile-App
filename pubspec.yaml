@@ -57,6 +57,9 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
 
+  # WebSocket for realtime chat
+  socket_io_client: ^2.0.3+1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -806,8 +806,8 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       _showValidationError('Nama barang wajib diisi');
       return false;
     }
-    if (itemName.length < 3) {
-      _showValidationError('Nama barang minimal 3 karakter');
+    if (itemName.length < 2) {
+      _showValidationError('Nama barang minimal 2 karakter');
       return false;
     }
 
@@ -837,10 +837,28 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       _showValidationError('Alamat pickup wajib diisi');
       return false;
     }
+    if (_pickupAddressController.text.trim().length < 5) {
+      _showValidationError('Alamat pickup minimal 5 karakter');
+      return false;
+    }
 
     // Validate destination address
     if (_destinationAddressController.text.trim().isEmpty) {
       _showValidationError('Alamat tujuan wajib diisi');
+      return false;
+    }
+    if (_destinationAddressController.text.trim().length < 5) {
+      _showValidationError('Alamat tujuan minimal 5 karakter');
+      return false;
+    }
+
+    // Validate coordinates
+    if (_pickupLatitude == null || _pickupLongitude == null) {
+      _showValidationError('Lokasi pickup wajib diisi');
+      return false;
+    }
+    if (_destinationLatitude == null || _destinationLongitude == null) {
+      _showValidationError('Lokasi tujuan wajib diisi');
       return false;
     }
 
@@ -918,6 +936,20 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       return;
     }
 
+    // Calculate distance if not already done
+    if (_pickupLatitude != null &&
+        _pickupLongitude != null &&
+        _destinationLatitude != null &&
+        _destinationLongitude != null) {
+      _calculateDistance();
+    }
+
+    // Validate distance
+    if (_distanceKm <= 0) {
+      _showValidationError('Jarak pengiriman tidak valid');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -926,38 +958,48 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       final authProvider = context.read<AuthProvider>();
       final orderProvider = context.read<OrderProvider>();
 
+      debugPrint('Creating order with distance: $_distanceKm km');
+
       final request = CreateOrderRequest(
         item: OrderItem(
-          name: _itemNameController.text,
+          name: _itemNameController.text.trim(),
           category: _selectedCategory,
-          weight: double.parse(_itemWeightController.text),
-          description: _itemDescriptionController.text.isEmpty
+          weight: double.parse(_itemWeightController.text.trim()),
+          description: _itemDescriptionController.text.trim().isEmpty
               ? null
-              : _itemDescriptionController.text,
+              : _itemDescriptionController.text.trim(),
           isFragile: _isFragile,
         ),
         pickup: Location(
-          address: _pickupAddressController.text,
+          address: _pickupAddressController.text.trim(),
           coords: Coordinates(
-            latitude: _pickupLatitude ?? -6.2088,
-            longitude: _pickupLongitude ?? 106.8456,
+            latitude: _pickupLatitude!, // Now guaranteed non-null by validation
+            longitude: _pickupLongitude!,
           ),
         ),
         destination: Location(
-          address: _destinationAddressController.text,
+          address: _destinationAddressController.text.trim(),
           coords: Coordinates(
-            latitude: _destinationLatitude ?? -6.2350,
-            longitude: _destinationLongitude ?? 106.8234,
+            latitude:
+                _destinationLatitude!, // Now guaranteed non-null by validation
+            longitude: _destinationLongitude!,
           ),
         ),
-        distanceKm: _distanceKm,
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
+        distanceKm: _distanceKm > 0
+            ? _distanceKm
+            : 5.0, // Fallback to 5km if not calculated
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       final result = await orderProvider.createOrder(
         token: authProvider.token!,
         request: request,
       );
+
+      debugPrint('CreateOrder Response: ${result.message}');
+      debugPrint('CreateOrder Success: ${result.success}');
 
       setState(() {
         _isLoading = false;
