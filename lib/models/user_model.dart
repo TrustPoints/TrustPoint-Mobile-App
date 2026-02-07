@@ -44,6 +44,7 @@ class User {
   final String email;
   final String? profilePicture;
   final double trustScore;
+  final int points; // 1 pts = Rp100
   final String languagePreference;
   final DefaultAddress? defaultAddress;
   final DateTime createdAt;
@@ -55,6 +56,7 @@ class User {
     required this.email,
     this.profilePicture,
     required this.trustScore,
+    this.points = 0,
     required this.languagePreference,
     this.defaultAddress,
     required this.createdAt,
@@ -88,6 +90,7 @@ class User {
       email: json['email'] as String? ?? '',
       profilePicture: json['profile_picture'] as String?,
       trustScore: (json['trust_score'] as num?)?.toDouble() ?? 0.0,
+      points: (json['points'] as num?)?.toInt() ?? 0,
       languagePreference: json['language_preference'] as String? ?? 'en',
       defaultAddress: json['default_address'] != null
           ? DefaultAddress.fromJson(
@@ -107,12 +110,16 @@ class User {
       'email': email,
       'profile_picture': profilePicture,
       'trust_score': trustScore,
+      'points': points,
       'language_preference': languagePreference,
       'default_address': defaultAddress?.toJson(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
   }
+
+  /// Get points value in Rupiah (1 pts = Rp100)
+  int get pointsInRupiah => points * 100;
 
   /// Create a copy with updated fields
   User copyWith({
@@ -121,6 +128,7 @@ class User {
     String? email,
     String? profilePicture,
     double? trustScore,
+    int? points,
     String? languagePreference,
     DefaultAddress? defaultAddress,
     DateTime? createdAt,
@@ -132,6 +140,7 @@ class User {
       email: email ?? this.email,
       profilePicture: profilePicture ?? this.profilePicture,
       trustScore: trustScore ?? this.trustScore,
+      points: points ?? this.points,
       languagePreference: languagePreference ?? this.languagePreference,
       defaultAddress: defaultAddress ?? this.defaultAddress,
       createdAt: createdAt ?? this.createdAt,
@@ -141,6 +150,6 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, fullName: $fullName, email: $email, trustScore: $trustScore)';
+    return 'User(id: $id, fullName: $fullName, email: $email, trustScore: $trustScore, points: $points)';
   }
 }

@@ -648,17 +648,61 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Available Balance',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Available Points',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          '1 pts = Rp100',
+                          style: TextStyle(color: Colors.white70, fontSize: 10),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        _formatPoints(user?.points ?? 0),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          'pts',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Text(
-                    'Rp ${((user?.trustScore.toInt() ?? 100) * 1000).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                    '≈ Rp ${_formatRupiah(user?.pointsInRupiah ?? 0)}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -667,15 +711,15 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: _buildWalletAction(
                           icon: Icons.add_rounded,
-                          label: 'Top Up',
+                          label: 'Earn Points',
                           onTap: () {},
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildWalletAction(
-                          icon: Icons.send_rounded,
-                          label: 'Withdraw',
+                          icon: Icons.card_giftcard_rounded,
+                          label: 'Redeem',
                           onTap: () {},
                         ),
                       ),
@@ -719,6 +763,22 @@ class _HomeScreenState extends State<HomeScreen>
           ],
         ),
       ),
+    );
+  }
+
+  /// Format points with thousand separator
+  String _formatPoints(int points) {
+    return points.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
+    );
+  }
+
+  /// Format rupiah with thousand separator
+  String _formatRupiah(int amount) {
+    return amount.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]}.',
     );
   }
 
