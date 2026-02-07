@@ -1114,6 +1114,8 @@ class _HunterActions extends StatelessWidget {
               orderId: order.orderId,
             );
             if (result.success && context.mounted) {
+              // Refresh user profile to update points balance
+              await authProvider.refreshProfile();
               _showDeliverySuccessDialog(context, result.trustPointsEarned);
             } else if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(

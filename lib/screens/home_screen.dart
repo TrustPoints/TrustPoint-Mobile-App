@@ -175,10 +175,10 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${user?.trustScore.toStringAsFixed(1) ?? '5.0'}',
+                              '1 pts = Rp100',
                               style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
                               ),
                             ),
                           ],
@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${user?.trustScore.toInt() ?? 100}',
+                        _formatPoints(user?.points ?? 0),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 42,
@@ -206,6 +206,14 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '≈ Rp ${_formatRupiah(user?.pointsInRupiah ?? 0)}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
