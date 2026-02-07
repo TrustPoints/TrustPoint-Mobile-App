@@ -974,7 +974,9 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
       });
 
       if (!estimateResult.success) {
-        _showValidationError(estimateResult.message ?? 'Gagal menghitung biaya');
+        _showValidationError(
+          estimateResult.message ?? 'Gagal menghitung biaya',
+        );
         return;
       }
 
@@ -1086,7 +1088,11 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 28),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.warning,
+              size: 28,
+            ),
             const SizedBox(width: 8),
             const Text('Saldo Tidak Cukup'),
           ],
@@ -1095,9 +1101,17 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildPointsRow('Biaya Pengiriman', '$required pts', AppColors.error),
+            _buildPointsRow(
+              'Biaya Pengiriman',
+              '$required pts',
+              AppColors.error,
+            ),
             const SizedBox(height: 8),
-            _buildPointsRow('Saldo Anda', '$current pts', AppColors.textSecondary),
+            _buildPointsRow(
+              'Saldo Anda',
+              '$current pts',
+              AppColors.textSecondary,
+            ),
             const Divider(height: 24),
             _buildPointsRow('Kekurangan', '$shortage pts', AppColors.error),
             const SizedBox(height: 16),
@@ -1131,7 +1145,7 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
     required int hunterReward,
   }) {
     final newBalance = currentBalance - estimatedCost;
-    
+
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1149,23 +1163,42 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
               ),
               child: Column(
                 children: [
-                  _buildPointsRow('Biaya Pengiriman', '$estimatedCost pts', AppColors.textPrimary),
+                  _buildPointsRow(
+                    'Biaya Pengiriman',
+                    '$estimatedCost pts',
+                    AppColors.textPrimary,
+                  ),
                   const SizedBox(height: 8),
-                  _buildPointsRow('Saldo Anda', '$currentBalance pts', AppColors.textSecondary),
+                  _buildPointsRow(
+                    'Saldo Anda',
+                    '$currentBalance pts',
+                    AppColors.textSecondary,
+                  ),
                   const Divider(height: 16),
-                  _buildPointsRow('Saldo Setelah', '$newBalance pts', AppColors.success),
+                  _buildPointsRow(
+                    'Saldo Setelah',
+                    '$newBalance pts',
+                    AppColors.success,
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: AppColors.textTertiary),
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: AppColors.textTertiary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Hunter akan mendapat $hunterReward pts saat pengiriman selesai.',
-                    style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ],
@@ -1226,7 +1259,10 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
             if (order.pointsCost > 0) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),

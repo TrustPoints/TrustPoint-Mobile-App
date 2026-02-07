@@ -76,7 +76,8 @@ class OrderService {
     }
 
     return EstimateCostResult.error(
-      message: response.data?['message'] as String? ?? 'Gagal menghitung estimasi',
+      message:
+          response.data?['message'] as String? ?? 'Gagal menghitung estimasi',
     );
   }
 
@@ -497,6 +498,7 @@ class DeliveryResult {
     return DeliveryResult._(success: false, message: message);
   }
 }
+
 /// Result class for delivery cost estimation
 class EstimateCostResult {
   final bool success;
