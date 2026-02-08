@@ -1,8 +1,6 @@
 /// API Configuration for TrustPoints Backend
-class ApiConfig { 
-  // static const String baseUrl = 'http://10.0.2.2:5000'; // Android emulator
-  // static const String baseUrl = 'http://localhost:5000'; // iOS simulator
-  static const String baseUrl = 'http://192.168.100.6:5000'; // Physical device
+class ApiConfig {
+  static const String baseUrl = 'https://trustpoints.irc-enter.tech';
 
   // API Endpoints
   static const String register = '/api/register';

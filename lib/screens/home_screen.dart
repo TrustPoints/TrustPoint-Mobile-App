@@ -125,14 +125,6 @@ class _HomeScreenState extends State<HomeScreen>
                           color: AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Ready to deliver today?',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
                     ],
                   ),
                   GestureDetector(
@@ -777,10 +769,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Manage your earnings',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
             const SizedBox(height: 24),
 
             // Balance Card
@@ -864,7 +852,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: _buildWalletAction(
                           icon: Icons.add_rounded,
-                          label: 'Earn Points',
+                          label: 'Top Up',
                           onTap: () {},
                         ),
                       ),
@@ -872,7 +860,7 @@ class _HomeScreenState extends State<HomeScreen>
                       Expanded(
                         child: _buildWalletAction(
                           icon: Icons.card_giftcard_rounded,
-                          label: 'Redeem',
+                          label: 'Withdraw',
                           onTap: () {},
                         ),
                       ),

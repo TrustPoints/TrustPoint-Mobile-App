@@ -158,13 +158,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _buildDivider(),
                       _buildStatItem(
-                        '${user?.trustScore.toStringAsFixed(1) ?? '5.0'}',
-                        'Rating',
-                        Icons.star_rounded,
-                        const Color(0xFFff9500),
-                      ),
-                      _buildDivider(),
-                      _buildStatItem(
                         '0',
                         'Deliveries',
                         Icons.local_shipping_rounded,
@@ -296,13 +289,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           )
                         : null,
                   ),
-                  _buildMenuDivider(),
-                  _buildMenuItem(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    subtitle: 'Notification preferences',
-                    onTap: () {},
-                  ),
                 ],
               ),
             ),
@@ -323,19 +309,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Column(
                 children: [
-                  _buildMenuItem(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help Center',
-                    subtitle: 'Get help and support',
-                    onTap: () {},
-                  ),
-                  _buildMenuDivider(),
-                  _buildMenuItem(
-                    icon: Icons.privacy_tip_outlined,
-                    title: 'Privacy Policy',
-                    subtitle: 'View our privacy policy',
-                    onTap: () {},
-                  ),
                   _buildMenuDivider(),
                   _buildMenuItem(
                     icon: Icons.info_outline_rounded,
