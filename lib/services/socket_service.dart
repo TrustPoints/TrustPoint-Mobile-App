@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/chat_model.dart';
 import '../services/auth_service.dart';
@@ -37,7 +36,6 @@ class SocketService {
   /// Inisialisasi dan koneksi ke WebSocket server
   Future<void> connect({required String baseUrl}) async {
     if (_isConnected && _socket != null) {
-      debugPrint('SocketService: Already connected');
       return;
     }
 
@@ -63,9 +61,6 @@ class SocketService {
         cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
       }
 
-      debugPrint('SocketService: Connecting to $cleanUrl');
-      debugPrint('SocketService: Token length: ${token.length}');
-
       // Create socket connection with token in both auth and query
       _socket = IO.io(
         cleanUrl,
@@ -90,9 +85,7 @@ class SocketService {
 
       // Wait a bit to check connection status
       await Future.delayed(const Duration(seconds: 2));
-      debugPrint('SocketService: Connection status after delay: $_isConnected');
     } catch (e) {
-      debugPrint('SocketService: Connection error - $e');
       _errorController.add('Gagal terhubung: $e');
     }
   }
@@ -103,54 +96,47 @@ class SocketService {
 
     // Connection events
     _socket!.onConnect((_) {
-      debugPrint('SocketService: ✅ Connected successfully!');
       _isConnected = true;
       _connectionController.add(true);
     });
 
     _socket!.onDisconnect((_) {
-      debugPrint('SocketService: ❌ Disconnected');
       _isConnected = false;
       _connectionController.add(false);
     });
 
     _socket!.onConnectError((error) {
-      debugPrint('SocketService: ⚠️ Connect error - $error');
       _isConnected = false;
       _connectionController.add(false);
       _errorController.add('Gagal terhubung ke server');
     });
 
     _socket!.onError((error) {
-      debugPrint('SocketService: ⚠️ Socket error - $error');
       _errorController.add('Error: $error');
     });
 
     // Custom events
     _socket!.on('connected', (data) {
-      debugPrint('SocketService: ✅ Server confirmed connection - $data');
       _isConnected = true;
       _connectionController.add(true);
     });
 
     _socket!.on('error', (data) {
-      debugPrint('SocketService: Server error - $data');
       if (data is Map && data['message'] != null) {
         _errorController.add(data['message']);
       }
     });
 
     _socket!.on('joined_chat', (data) {
-      debugPrint('SocketService: Joined chat - $data');
+      // Chat joined successfully
     });
 
     _socket!.on('left_chat', (data) {
-      debugPrint('SocketService: Left chat - $data');
+      // Chat left successfully
     });
 
     // New message event
     _socket!.on('new_message', (data) {
-      debugPrint('SocketService: New message received - $data');
       try {
         if (data is Map && data['message'] != null) {
           final message = ChatMessage.fromJson(
@@ -159,13 +145,12 @@ class SocketService {
           _messageController.add(message);
         }
       } catch (e) {
-        debugPrint('SocketService: Error parsing message - $e');
+        // Error parsing message - silently ignore
       }
     });
 
     // Typing indicator
     _socket!.on('user_typing', (data) {
-      debugPrint('SocketService: User typing - $data');
       if (data is Map) {
         final event = TypingEvent(
           orderId: data['order_id'] ?? '',
@@ -178,7 +163,6 @@ class SocketService {
 
     // Messages read
     _socket!.on('messages_read', (data) {
-      debugPrint('SocketService: Messages read - $data');
       if (data is Map) {
         final event = ReadEvent(
           orderId: data['order_id'] ?? '',
@@ -192,7 +176,6 @@ class SocketService {
   /// Join chat room untuk order tertentu
   void joinChat(String orderId) {
     if (_socket == null || !_isConnected) {
-      debugPrint('SocketService: Cannot join chat - not connected');
       return;
     }
 
@@ -203,7 +186,6 @@ class SocketService {
 
     _currentOrderId = orderId;
     _socket!.emit('join_chat', {'order_id': orderId});
-    debugPrint('SocketService: Joining chat room for order $orderId');
   }
 
   /// Leave chat room
@@ -214,7 +196,6 @@ class SocketService {
     if (_currentOrderId == orderId) {
       _currentOrderId = null;
     }
-    debugPrint('SocketService: Leaving chat room for order $orderId');
   }
 
   /// Kirim pesan via WebSocket
@@ -225,7 +206,6 @@ class SocketService {
     }
 
     _socket!.emit('send_message', {'order_id': orderId, 'message': message});
-    debugPrint('SocketService: Sending message to order $orderId');
   }
 
   /// Kirim typing indicator
@@ -253,7 +233,6 @@ class SocketService {
     _socket = null;
     _isConnected = false;
     _connectionController.add(false);
-    debugPrint('SocketService: Disconnected and disposed');
   }
 
   /// Dispose semua resources

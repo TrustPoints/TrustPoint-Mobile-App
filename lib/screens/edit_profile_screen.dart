@@ -78,7 +78,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Image picker error: $e');
       if (mounted) {
         Navigator.pop(context); // Close bottom sheet
         _showErrorSnackBar(

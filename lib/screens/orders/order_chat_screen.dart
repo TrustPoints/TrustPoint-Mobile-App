@@ -73,10 +73,6 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
       // Join chat room after connection is established
       await Future.delayed(const Duration(milliseconds: 1000));
 
-      debugPrint(
-        'OrderChatScreen: Socket connected: ${_socketService.isConnected}',
-      );
-
       if (_socketService.isConnected) {
         _socketService.joinChat(widget.orderId);
         if (mounted) {
@@ -86,7 +82,7 @@ class _OrderChatScreenState extends State<OrderChatScreen> {
         }
       }
     } catch (e) {
-      debugPrint('WebSocket connection error: $e');
+      // Connection error - silently handle
     }
   }
 

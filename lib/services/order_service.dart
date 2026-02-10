@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../models/order_model.dart';
 import 'api_service.dart';
 
@@ -13,16 +12,11 @@ class OrderService {
   }) async {
     final requestBody = request.toJson();
 
-    // Debug logging
-    debugPrint('Creating order with body: $requestBody');
-
     final response = await _apiService.post(
       '/api/orders',
       body: requestBody,
       token: token,
     );
-
-    debugPrint('Order creation response: ${response.data}');
 
     if (response.success && response.data != null) {
       final orderData =

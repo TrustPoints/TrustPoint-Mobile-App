@@ -1006,8 +1006,6 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         _isLoading = true;
       });
 
-      debugPrint('Creating order with distance: $_distanceKm km');
-
       final request = CreateOrderRequest(
         item: OrderItem(
           name: _itemNameController.text.trim(),
@@ -1045,9 +1043,6 @@ class _CreateOrderScreenState extends State<CreateOrderScreen> {
         token: authProvider.token!,
         request: request,
       );
-
-      debugPrint('CreateOrder Response: ${result.message}');
-      debugPrint('CreateOrder Success: ${result.success}');
 
       setState(() {
         _isLoading = false;

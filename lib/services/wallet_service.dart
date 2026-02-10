@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
 
@@ -70,7 +69,6 @@ class WalletService {
     try {
       final token = await _authService.getToken();
       if (token == null) {
-        debugPrint('[WalletService] No auth token');
         return null;
       }
 
@@ -82,8 +80,6 @@ class WalletService {
         },
       );
 
-      debugPrint('[WalletService] getBalance response: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json['success'] == true && json['data'] != null) {
@@ -93,7 +89,6 @@ class WalletService {
 
       return null;
     } catch (e) {
-      debugPrint('[WalletService] getBalance error: $e');
       return null;
     }
   }
@@ -123,13 +118,9 @@ class WalletService {
         body: jsonEncode(body),
       );
 
-      debugPrint('[WalletService] earnPoints response: ${response.statusCode}');
-      debugPrint('[WalletService] earnPoints body: ${response.body}');
-
       final json = jsonDecode(response.body);
       return WalletTransactionResult.fromJson(json);
     } catch (e) {
-      debugPrint('[WalletService] earnPoints error: $e');
       return WalletTransactionResult(success: false, error: e.toString());
     }
   }
@@ -159,15 +150,9 @@ class WalletService {
         body: jsonEncode(body),
       );
 
-      debugPrint(
-        '[WalletService] redeemPoints response: ${response.statusCode}',
-      );
-      debugPrint('[WalletService] redeemPoints body: ${response.body}');
-
       final json = jsonDecode(response.body);
       return WalletTransactionResult.fromJson(json);
     } catch (e) {
-      debugPrint('[WalletService] redeemPoints error: $e');
       return WalletTransactionResult(success: false, error: e.toString());
     }
   }
@@ -197,15 +182,9 @@ class WalletService {
         body: jsonEncode(body),
       );
 
-      debugPrint(
-        '[WalletService] transferPoints response: ${response.statusCode}',
-      );
-      debugPrint('[WalletService] transferPoints body: ${response.body}');
-
       final json = jsonDecode(response.body);
       return WalletTransactionResult.fromJson(json);
     } catch (e) {
-      debugPrint('[WalletService] transferPoints error: $e');
       return WalletTransactionResult(success: false, error: e.toString());
     }
   }

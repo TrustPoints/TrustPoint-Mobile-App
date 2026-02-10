@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
@@ -163,8 +162,6 @@ class ActivityService {
         },
       );
 
-      debugPrint('GetRecentActivities Response: ${response.statusCode}');
-
       final json = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -176,7 +173,6 @@ class ActivityService {
         error: json['message'] ?? 'Failed to get activities',
       );
     } catch (e) {
-      debugPrint('GetRecentActivities Error: $e');
       return ActivityResult(success: false, error: e.toString());
     }
   }
@@ -196,8 +192,6 @@ class ActivityService {
         },
       );
 
-      debugPrint('GetAllActivities Response: ${response.statusCode}');
-
       final json = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -209,7 +203,6 @@ class ActivityService {
         error: json['message'] ?? 'Failed to get activities',
       );
     } catch (e) {
-      debugPrint('GetAllActivities Error: $e');
       return ActivityResult(success: false, error: e.toString());
     }
   }
