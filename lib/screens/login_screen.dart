@@ -157,42 +157,18 @@ class _LoginScreenState extends State<LoginScreen>
                         // Logo
                         Center(
                           child: Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              gradient: AppTheme.primaryGradient,
+                            width: 160,
+                            height: 160,
+                            child: ClipRRect(
                               borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primaryStart.withOpacity(
-                                    0.4,
-                                  ),
-                                  blurRadius: 25,
-                                  offset: const Offset(0, 12),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.local_shipping_rounded,
-                              size: 45,
-                              color: Colors.white,
+                              child: Image.asset(
+                                'lib/image/trustpoint_logo.png',
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),
 
-                        const SizedBox(height: 28),
-
-                        // Title
-                        const Text(
-                          'TrustPoints',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
                         const SizedBox(height: 6),
                         const Text(
                           'P2P Delivery Platform',
@@ -204,24 +180,6 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
 
                         const SizedBox(height: 40),
-
-                        // Welcome
-                        const Text(
-                          'Welcome Back 👋',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Sign in to continue your delivery journey',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
 
                         const SizedBox(height: 28),
 

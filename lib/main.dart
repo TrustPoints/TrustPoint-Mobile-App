@@ -78,33 +78,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
+                      width: 120,
+                      height: 120,
+                      child: ClipRRect(
                         borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryStart.withOpacity(0.4),
-                            blurRadius: 25,
-                            offset: const Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.local_shipping_rounded,
-                        size: 50,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    const Text(
-                      'TrustPoints',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.5,
+                        child: Image.asset(
+                          'lib/image/trustpoint_logo.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
