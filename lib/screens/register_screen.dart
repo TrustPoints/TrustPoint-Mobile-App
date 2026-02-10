@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../config/app_theme.dart';
+import '../config/app_theme.dart' hide GradientButton;
 import '../providers/auth_provider.dart';
 import '../widgets/notification_modal.dart';
+import '../widgets/common_widgets.dart';
+import '../utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,8 +21,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -294,15 +294,18 @@ class _RegisterScreenState extends State<RegisterScreen>
                         const SizedBox(height: 30),
 
                         // Name Field
-                        _buildInputField(
+                        AppTextField(
                           controller: _nameController,
                           hint: 'Full Name',
-                          icon: Icons.person_outline_rounded,
+                          prefixIcon: Icons.person_outline_rounded,
+                          textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter your name';
-                            if (value.length < 3)
+                            }
+                            if (value.length < 3) {
                               return 'Name must be at least 3 characters';
+                            }
                             return null;
                           },
                         ),
@@ -310,14 +313,16 @@ class _RegisterScreenState extends State<RegisterScreen>
                         const SizedBox(height: 14),
 
                         // Email Field
-                        _buildInputField(
+                        AppTextField(
                           controller: _emailController,
                           hint: 'Email address',
-                          icon: Icons.email_outlined,
+                          prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter your email';
+                            }
                             if (!RegExp(
                               r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                             ).hasMatch(value)) {
@@ -330,28 +335,17 @@ class _RegisterScreenState extends State<RegisterScreen>
                         const SizedBox(height: 14),
 
                         // Password Field
-                        _buildInputField(
+                        AppPasswordField(
                           controller: _passwordController,
                           hint: 'Password',
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: AppColors.textSecondary,
-                              size: 22,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
+                          textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please enter a password';
-                            if (value.length < 6)
+                            }
+                            if (value.length < 6) {
                               return 'Password must be at least 6 characters';
+                            }
                             return null;
                           },
                         ),
@@ -359,29 +353,17 @@ class _RegisterScreenState extends State<RegisterScreen>
                         const SizedBox(height: 14),
 
                         // Confirm Password Field
-                        _buildInputField(
+                        AppPasswordField(
                           controller: _confirmPasswordController,
                           hint: 'Confirm Password',
-                          icon: Icons.lock_outline_rounded,
-                          obscureText: _obscureConfirmPassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureConfirmPassword
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: AppColors.textSecondary,
-                              size: 22,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscureConfirmPassword =
-                                  !_obscureConfirmPassword,
-                            ),
-                          ),
+                          textInputAction: TextInputAction.done,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Please confirm your password';
-                            if (value != _passwordController.text)
+                            }
+                            if (value != _passwordController.text) {
                               return 'Passwords do not match';
+                            }
                             return null;
                           },
                         ),
@@ -500,64 +482,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    bool obscureText = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        validator: validator,
-        style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textTertiary),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 22),
-          suffixIcon: suffixIcon,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.primaryStart,
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.error, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.error, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 16,
           ),
         ),
       ),

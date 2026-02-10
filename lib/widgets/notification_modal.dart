@@ -298,37 +298,3 @@ class _NotificationDialogState extends State<_NotificationDialog>
     );
   }
 }
-
-// Password validation helper
-class PasswordValidator {
-  static const int minLength = 8;
-
-  static List<String> validate(String password) {
-    List<String> errors = [];
-
-    if (password.length < minLength) {
-      errors.add('Minimal $minLength karakter');
-    }
-    if (!password.contains(RegExp(r'[A-Z]'))) {
-      errors.add('Minimal 1 huruf besar (A-Z)');
-    }
-    if (!password.contains(RegExp(r'[a-z]'))) {
-      errors.add('Minimal 1 huruf kecil (a-z)');
-    }
-    if (!password.contains(RegExp(r'[0-9]'))) {
-      errors.add('Minimal 1 angka (0-9)');
-    }
-
-    return errors;
-  }
-
-  static bool isValid(String password) {
-    return validate(password).isEmpty;
-  }
-
-  static String? getErrorMessage(String password) {
-    final errors = validate(password);
-    if (errors.isEmpty) return null;
-    return 'Password harus memenuhi kriteria:\n• ${errors.join('\n• ')}';
-  }
-}

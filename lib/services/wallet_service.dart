@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
-import '../models/user_model.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
 

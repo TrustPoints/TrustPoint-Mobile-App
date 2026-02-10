@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/common_widgets.dart';
 import 'change_password_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -291,8 +292,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.user;
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -477,10 +485,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Full Name Field
                 _buildLabel('Full Name'),
                 const SizedBox(height: 8),
-                _buildInputField(
+                AppTextField(
                   controller: _nameController,
                   hint: 'Enter your full name',
-                  icon: Icons.person_outline_rounded,
+                  prefixIcon: Icons.person_outline_rounded,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your name';
@@ -497,10 +505,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // Email Field (Read-only)
                 _buildLabel('Email Address'),
                 const SizedBox(height: 8),
-                _buildInputField(
+                AppTextField(
                   controller: _emailController,
                   hint: 'Email address',
-                  icon: Icons.email_outlined,
+                  prefixIcon: Icons.email_outlined,
                   readOnly: true,
                   suffixIcon: Container(
                     margin: const EdgeInsets.only(right: 12),
@@ -621,65 +629,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         fontSize: 13,
         fontWeight: FontWeight.w600,
         color: AppColors.textSecondary,
-      ),
-    );
-  }
-
-  Widget _buildInputField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    bool readOnly = false,
-    Widget? suffixIcon,
-    String? Function(String?)? validator,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: readOnly ? AppColors.surfaceVariant : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        readOnly: readOnly,
-        validator: validator,
-        style: TextStyle(
-          fontSize: 15,
-          color: readOnly ? AppColors.textSecondary : AppColors.textPrimary,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: AppColors.textTertiary),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 22),
-          suffixIcon: suffixIcon,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.primaryStart,
-              width: 2,
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.error, width: 1),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: AppColors.error, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 16,
-          ),
-        ),
       ),
     );
   }
