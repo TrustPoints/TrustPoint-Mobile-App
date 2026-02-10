@@ -146,28 +146,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Stats Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildStatItem(
-                        '${user?.trustScore.toInt() ?? 100}',
-                        'Points',
-                        Icons.stars_rounded,
-                        const Color(0xFFffd700),
-                      ),
-                      _buildDivider(),
-                      _buildStatItem(
-                        '0',
-                        'Deliveries',
-                        Icons.local_shipping_rounded,
-                        AppColors.primaryStart,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
                   // Verification Badge
                   Container(
                     padding: const EdgeInsets.symmetric(
