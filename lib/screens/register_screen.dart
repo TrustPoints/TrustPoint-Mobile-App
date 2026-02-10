@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/notification_modal.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -56,63 +57,153 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    // Validate name
+    if (name.isEmpty) {
+      _showErrorModal(
+        title: 'Nama Kosong',
+        message: 'Silakan masukkan nama lengkap Anda.',
+      );
+      return;
+    }
+
+    if (name.length < 3) {
+      _showErrorModal(
+        title: 'Nama Terlalu Pendek',
+        message: 'Nama harus minimal 3 karakter.',
+      );
+      return;
+    }
+
+    // Validate email
+    if (email.isEmpty) {
+      _showErrorModal(
+        title: 'Email Kosong',
+        message: 'Silakan masukkan alamat email Anda.',
+      );
+      return;
+    }
+
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showErrorModal(
+        title: 'Email Tidak Valid',
+        message:
+            'Format email tidak valid. Pastikan email Anda benar, contoh: nama@email.com',
+      );
+      return;
+    }
+
+    // Validate password
+    if (password.isEmpty) {
+      _showErrorModal(
+        title: 'Password Kosong',
+        message: 'Silakan masukkan password Anda.',
+      );
+      return;
+    }
+
+    // Check password strength
+    final passwordError = PasswordValidator.getErrorMessage(password);
+    if (passwordError != null) {
+      _showErrorModal(title: 'Password Lemah', message: passwordError);
+      return;
+    }
+
+    // Validate confirm password
+    if (confirmPassword.isEmpty) {
+      _showErrorModal(
+        title: 'Konfirmasi Password',
+        message: 'Silakan masukkan konfirmasi password Anda.',
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showErrorModal(
+        title: 'Password Tidak Sama',
+        message:
+            'Password dan konfirmasi password tidak cocok. Pastikan keduanya sama.',
+      );
+      return;
+    }
+
+    // Check terms
     if (!_acceptTerms) {
-      _showErrorSnackBar('Please accept the terms and conditions');
+      _showWarningModal(
+        title: 'Syarat & Ketentuan',
+        message:
+            'Anda harus menyetujui Syarat & Ketentuan untuk melanjutkan pendaftaran.',
+      );
       return;
     }
 
     HapticFeedback.lightImpact();
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
-      fullName: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
+      fullName: name,
+      email: email,
+      password: password,
     );
 
     if (mounted) {
       if (success) {
-        _showSuccessSnackBar('Account created successfully!');
-        Navigator.pop(context);
+        _showSuccessModal(
+          title: 'Pendaftaran Berhasil! 🎉',
+          message:
+              'Akun Anda telah berhasil dibuat. Silakan login untuk melanjutkan.',
+          onClose: () => Navigator.pop(context),
+        );
       } else {
-        _showErrorSnackBar(authProvider.errorMessage ?? 'Registration failed');
+        final errorMsg = authProvider.errorMessage ?? 'Pendaftaran gagal';
+
+        if (errorMsg.toLowerCase().contains('already') ||
+            errorMsg.toLowerCase().contains('exist') ||
+            errorMsg.toLowerCase().contains('terdaftar')) {
+          _showErrorModal(
+            title: 'Email Sudah Terdaftar',
+            message:
+                'Email ini sudah digunakan. Silakan gunakan email lain atau login dengan akun yang sudah ada.',
+          );
+        } else {
+          _showErrorModal(title: 'Pendaftaran Gagal', message: errorMsg);
+        }
       }
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
+  void _showErrorModal({required String title, required String message}) {
+    NotificationModal.showError(
+      context: context,
+      title: title,
+      message: message,
+      buttonText: 'Mengerti',
     );
   }
 
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
+  void _showSuccessModal({
+    required String title,
+    required String message,
+    VoidCallback? onClose,
+  }) {
+    NotificationModal.showSuccess(
+      context: context,
+      title: title,
+      message: message,
+      buttonText: 'Lanjutkan',
+      onButtonPressed: onClose,
+    );
+  }
+
+  void _showWarningModal({required String title, required String message}) {
+    NotificationModal.showWarning(
+      context: context,
+      title: title,
+      message: message,
+      buttonText: 'Mengerti',
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../config/app_theme.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/notification_modal.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -51,35 +52,80 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    // Validate email
+    if (email.isEmpty) {
+      _showErrorModal(
+        title: 'Email Kosong',
+        message: 'Silakan masukkan alamat email Anda untuk melanjutkan.',
+      );
+      return;
+    }
+
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showErrorModal(
+        title: 'Email Tidak Valid',
+        message:
+            'Format email tidak valid. Pastikan email Anda benar, contoh: nama@email.com',
+      );
+      return;
+    }
+
+    // Validate password
+    if (password.isEmpty) {
+      _showErrorModal(
+        title: 'Password Kosong',
+        message: 'Silakan masukkan password Anda untuk melanjutkan.',
+      );
+      return;
+    }
 
     HapticFeedback.lightImpact();
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    final success = await authProvider.login(email: email, password: password);
 
     if (!success && mounted) {
-      _showErrorSnackBar(authProvider.errorMessage ?? 'Login failed');
+      final errorMsg = authProvider.errorMessage ?? 'Login gagal';
+
+      // Check for specific error types
+      if (errorMsg.toLowerCase().contains('password') ||
+          errorMsg.toLowerCase().contains('incorrect') ||
+          errorMsg.toLowerCase().contains('invalid')) {
+        _showErrorModal(
+          title: 'Password Salah',
+          message:
+              'Password yang Anda masukkan salah. Silakan coba lagi atau gunakan fitur "Lupa Password".',
+        );
+      } else if (errorMsg.toLowerCase().contains('not found') ||
+          errorMsg.toLowerCase().contains('tidak ditemukan')) {
+        _showErrorModal(
+          title: 'Akun Tidak Ditemukan',
+          message:
+              'Email tidak terdaftar. Silakan periksa kembali atau buat akun baru.',
+        );
+      } else {
+        _showErrorModal(title: 'Login Gagal', message: errorMsg);
+      }
     }
   }
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
+  void _showErrorModal({required String title, required String message}) {
+    NotificationModal.showError(
+      context: context,
+      title: title,
+      message: message,
+      buttonText: 'Mengerti',
+    );
+  }
+
+  void _showSuccessModal({required String title, required String message}) {
+    NotificationModal.showSuccess(
+      context: context,
+      title: title,
+      message: message,
+      buttonText: 'OK',
     );
   }
 
